@@ -6,6 +6,8 @@ Three installation methods, from automated to fully manual.
 
 ## Method 1: Script (one command)
 
+**Claude Code:**
+
 ```bash
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash
 ```
@@ -17,6 +19,16 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
 ```
 
 If you have multiple profiles, the script will list them and ask you to choose (or pass `--profile`).
+
+**Codex** (macOS / Linux / WSL):
+
+```bash
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh |
+  bash -s -- --target codex
+```
+
+Codex installation resolves `CODEX_HOME`, defaulting to `~/.codex`. It keeps a
+separate knowledge base and does not modify Codex built-in Memories.
 
 ---
 
@@ -132,6 +144,46 @@ PROFILE="$HOME/.claude-personal" # then follow steps above
 
 **Single profile (default):**
 If only `~/.claude/` exists, the installer uses it automatically. No `--profile` needed.
+
+---
+
+## Codex installation details
+
+The Codex target installs:
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `SKILL.md` | `~/.agents/skills/distill/` | Native `$distill` skill |
+| `distill-process.md` | `$CODEX_HOME/distill/` | Distillation process |
+| `distill-monitor.md` | `$CODEX_HOME/distill/` | Session retrieval guidance |
+| `SPINE.md` | `$CODEX_HOME/distill/` | Knowledge index |
+| `.version` | `$CODEX_HOME/distill/` | Installed version |
+| Managed block | `$CODEX_HOME/AGENTS.md` | Always-on retrieval instructions |
+
+Codex built-in Memories and aura-distill can coexist:
+
+- Codex Memories provide automatic ambient recall.
+- aura-distill provides explicit, inspectable principle curation.
+- If guidance overlaps, curated aura-distill knowledge wins.
+
+The installer does not edit `$CODEX_HOME/config.toml` or
+`$CODEX_HOME/memories/`.
+
+Verify installation by starting a new Codex session and invoking:
+
+```text
+$distill
+```
+
+Uninstall the integration while preserving knowledge:
+
+```bash
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh |
+  bash -s -- --uninstall --target codex
+```
+
+Codex hooks, PowerShell support, Homebrew wrapper support, and plugin packaging
+are deferred follow-ups.
 
 ---
 

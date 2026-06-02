@@ -2,7 +2,9 @@
 
 ## What this is
 
-A first-principles memory system for Claude Code. Users install it via `install.sh`, which places files into `~/.claude/distill/`. The `/distill` slash command triggers retrospective distillation of conversation signals into tiered knowledge files.
+A first-principles memory system for Claude Code and Codex. Users install it via
+`install.sh`. Claude Code uses `~/.claude/distill/` and `/distill`; the opt-in
+Codex target uses `$CODEX_HOME/distill/` and `$distill`.
 
 ## Architecture
 
@@ -11,7 +13,9 @@ A first-principles memory system for Claude Code. Users install it via `install.
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via `rules/distill.md`)
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
+- `codex/` — Codex-specific skill, process, and monitor templates
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
+- `test-codex-sandbox.sh` — Disposable Codex installer tests
 - `docs/` — GitHub Pages site (landing, research)
 - `dashboard/` — Analytics dashboard
 
@@ -49,6 +53,7 @@ When developing or testing:
 - Test personas: Sofia (senior backend engineer) and Marcus (product manager)
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
+- Run Codex installer tests: `./test-codex-sandbox.sh`
 
 ## PR reviews
 

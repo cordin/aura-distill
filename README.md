@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>Not what it remembers — how it learns.</strong><br>
-  <em>First-principles memory for Claude Code. A/B tested.</em>
+  <em>First-principles memory for Claude Code and Codex. A/B tested.</em>
 </p>
 
 <p align="center">
@@ -53,12 +53,18 @@ aura-distill install
 curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash
 ```
 
+**Codex** (macOS / Linux / WSL):
+```bash
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh |
+  bash -s -- --target codex
+```
+
 **Windows** (PowerShell):
 ```powershell
 irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex
 ```
 
-<sub>No sudo, writes only to `~/.claude/` (`%USERPROFILE%\.claude\` on Windows). [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
+<sub>No sudo. Claude Code installation writes to `~/.claude/`; Codex installation writes to `$CODEX_HOME` (default `~/.codex/`) and `~/.agents/skills/`. [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
 
 This installs:
 
@@ -70,6 +76,19 @@ This installs:
 | `SPINE.md` | `~/.claude/distill/` | Knowledge index |
 
 Zero dependencies. No Node.js. No MCP server. No database. Just files.
+
+### Codex support
+
+Codex support is opt-in with `--target codex`. It installs a native `$distill`
+skill and a separate knowledge base under `$CODEX_HOME/distill/`.
+
+Codex built-in Memories are left unchanged. They provide ambient background
+recall; aura-distill provides deliberate, inspectable principle curation. When
+the two overlap, curated aura-distill guidance wins.
+
+The initial Codex integration targets Bash on macOS, Linux, and WSL. Codex
+hooks, PowerShell support, Homebrew wrapper support, and plugin packaging are
+deferred follow-ups.
 
 ---
 
@@ -159,6 +178,12 @@ rm -f ~/.claude/commands/distill.md ~/.claude/rules/distill.md
 rm -f ~/.claude/distill/distill-process.md ~/.claude/distill/distill-monitor.md ~/.claude/distill/.version
 ```
 
+**Codex** (keeps `$CODEX_HOME/distill/SPINE.md` and tier knowledge):
+```bash
+curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh |
+  bash -s -- --uninstall --target codex
+```
+
 **Windows** (PowerShell):
 ```powershell
 Remove-Item -Force $HOME\.claude\commands\distill.md, $HOME\.claude\rules\distill.md
@@ -170,5 +195,5 @@ Your knowledge files in `~/.claude/distill/` are preserved. They're yours.
 ---
 
 <p align="center">
-  <sub>v0.7.0 · MIT · Built for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a></sub>
+  <sub>v0.7.0 · MIT · Built for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a> and Codex</sub>
 </p>
