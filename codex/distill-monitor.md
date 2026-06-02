@@ -9,3 +9,7 @@ ambient Codex Memories. Do not modify `$CODEX_HOME/memories/`.
 
 Track corrections, failures, surprises, non-obvious teachings, and explicit
 preferences as signals. When several signals accumulate, recommend `$distill`.
+
+## Always-On User Preferences
+
+<!-- Synced from {DISTILL_DIR}/profile/ by $distill. Max 15 lines. -->

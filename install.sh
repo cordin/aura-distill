@@ -151,6 +151,7 @@ install_codex() {
             rm -f "$skill_dir/SKILL.md"
         fi
         rm -f "$distill_dir/distill-process.md"
+        rm -f "$distill_dir/distill-adapter.md"
         rm -f "$distill_dir/distill-monitor.md"
         rm -f "$distill_dir/.version"
         if [ -f "$agents_md" ]; then
@@ -186,9 +187,13 @@ install_codex() {
         sed "s|{DISTILL_DIR}|$distill_dir|g" > "$skill_dir/SKILL.md"
     done_msg "distill skill ${DIM}($skill_dir/SKILL.md)${RESET}"
 
-    fetch_asset "codex/distill-process.md" |
+    fetch_asset "distill-process.md" |
         sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-process.md"
-    done_msg "distill-process.md ${DIM}(Codex process engine)${RESET}"
+    done_msg "distill-process.md ${DIM}(shared process engine)${RESET}"
+
+    fetch_asset "codex/distill-adapter.md" |
+        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-adapter.md"
+    done_msg "distill-adapter.md ${DIM}(Codex overrides)${RESET}"
 
     fetch_asset "codex/distill-monitor.md" |
         sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-monitor.md"
@@ -223,6 +228,7 @@ domain, read matching Tier 2 files referenced by the SPINE. Treat aura-distill
 as authoritative when curated guidance overlaps with ambient Codex Memories.
 Do not modify Codex Memories. Track corrections, failures, surprises, and
 explicit preferences as signals; recommend \$distill when several accumulate.
+Read $distill_dir/distill-monitor.md for the complete session monitor.
 <!-- aura-distill:codex:end -->
 EOF
         done_msg "AGENTS.md configured"

@@ -65,16 +65,27 @@ cp "$TEST_CODEX_HOME/memories/existing.md" "$TEST_HOME/memory.before"
 install_codex
 
 assert_file "$TEST_SKILL" "native distill skill installed"
-assert_file "$TEST_CODEX_HOME/distill/distill-process.md" "Codex process installed"
+assert_file "$TEST_CODEX_HOME/distill/distill-process.md" "shared process installed"
+assert_file "$TEST_CODEX_HOME/distill/distill-adapter.md" "Codex adapter installed"
 assert_file "$TEST_CODEX_HOME/distill/distill-monitor.md" "Codex monitor installed"
 assert_file "$TEST_CODEX_HOME/distill/SPINE.md" "SPINE created"
 assert_file "$TEST_CODEX_HOME/distill/.version" "version file created"
 
 if grep -q "$TEST_CODEX_HOME/distill/SPINE.md" "$TEST_CODEX_HOME/AGENTS.md" &&
+   grep -q "$TEST_CODEX_HOME/distill/distill-adapter.md" "$TEST_SKILL" &&
    grep -q "$TEST_CODEX_HOME/distill/distill-process.md" "$TEST_SKILL"; then
   pass "installer resolves Codex distill path placeholders"
 else
   fail "installer resolves Codex distill path placeholders"
+fi
+
+sed "s|{DISTILL_DIR}|$TEST_CODEX_HOME/distill|g" \
+  "$SCRIPT_DIR/distill-process.md" > "$TEST_HOME/expected-shared-process.md"
+if cmp -s "$TEST_CODEX_HOME/distill/distill-process.md" \
+  "$TEST_HOME/expected-shared-process.md"; then
+  pass "Codex installs the shared process engine"
+else
+  fail "Codex installs the shared process engine"
 fi
 
 for dir in craft ops profile projects feedback archive; do
@@ -120,6 +131,7 @@ uninstall_codex
 
 if [ ! -f "$TEST_SKILL" ] &&
    [ ! -f "$TEST_CODEX_HOME/distill/distill-process.md" ] &&
+   [ ! -f "$TEST_CODEX_HOME/distill/distill-adapter.md" ] &&
    [ ! -f "$TEST_CODEX_HOME/distill/distill-monitor.md" ] &&
    [ ! -f "$TEST_CODEX_HOME/distill/.version" ]; then
   pass "uninstall removes integration assets"

@@ -41,7 +41,8 @@ Spawn a foreground `worker` subagent with this prompt:
 You are a Distillation Agent. Consolidate the supplied session signal harvest
 into durable knowledge.
 
-Read and follow the complete process:
+Read the Codex adapter first, then follow the shared complete process:
+{DISTILL_DIR}/distill-adapter.md
 {DISTILL_DIR}/distill-process.md
 
 Session signal harvest:
