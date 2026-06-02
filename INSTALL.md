@@ -156,7 +156,7 @@ The Codex target installs:
 | `SKILL.md` | `~/.agents/skills/distill/` | Native `$distill` skill |
 | `distill-process.md` | `$CODEX_HOME/distill/` | Shared distillation process |
 | `distill-adapter.md` | `$CODEX_HOME/distill/` | Codex-specific overrides |
-| `distill-monitor.md` | `$CODEX_HOME/distill/` | Session retrieval guidance |
+| `distill-monitor.md` | `$CODEX_HOME/distill/` | Shared session rules rendered for Codex |
 | `SPINE.md` | `$CODEX_HOME/distill/` | Knowledge index |
 | `.version` | `$CODEX_HOME/distill/` | Installed version |
 | Managed block | `$CODEX_HOME/AGENTS.md` | Always-on retrieval instructions |
@@ -170,8 +170,9 @@ Codex built-in Memories and aura-distill can coexist:
 The installer does not edit `$CODEX_HOME/config.toml` or
 `$CODEX_HOME/memories/`.
 
-Claude Code and Codex install the same root `distill-process.md`. The Codex
-adapter handles native `$distill`, `AGENTS.md`, and Codex Memories policy.
+Claude Code and Codex install the same root `distill-process.md` and reuse
+`rules/distill.md` for session retrieval. The Codex adapter and installer
+substitutions handle native `$distill`, `AGENTS.md`, and Codex Memories policy.
 
 Verify installation by starting a new Codex session and invoking:
 

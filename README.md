@@ -82,9 +82,10 @@ Zero dependencies. No Node.js. No MCP server. No database. Just files.
 Codex support is opt-in with `--target codex`. It installs a native `$distill`
 skill and a separate knowledge base under `$CODEX_HOME/distill/`.
 
-Claude Code and Codex share the same full distillation process. Thin
-platform-specific adapters handle invocation syntax, instruction files, and
-ambient-memory policy so the core learning behavior does not drift.
+Claude Code and Codex share the same full distillation process and session
+retrieval rules. Thin platform-specific adapters and installer substitutions
+handle invocation syntax, instruction files, and ambient-memory policy so the
+core learning behavior does not drift.
 
 Codex built-in Memories are left unchanged. They provide ambient background
 recall; aura-distill provides deliberate, inspectable principle curation. When

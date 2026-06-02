@@ -13,7 +13,7 @@ Codex target uses `$CODEX_HOME/distill/` and `$distill`.
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via `rules/distill.md`)
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
-- `codex/` — Thin Codex-specific skill, adapter, and monitor templates
+- `codex/` — Thin Codex-specific skill and adapter templates
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
 - `test-codex-sandbox.sh` — Disposable Codex installer tests
 - `docs/` — GitHub Pages site (landing, research)
@@ -41,6 +41,7 @@ When developing or testing:
 
 - All distill files use `{DISTILL_DIR}` as a placeholder — `install.sh` resolves it to the actual path via `sed`
 - Claude Code and Codex install the same root `distill-process.md`; keep platform-specific behavior in thin adapter files
+- Claude Code and Codex reuse `rules/distill.md`; the Codex installer renders it with native invocation and path substitutions
 - The SPINE (Tier 1) is the auto-loaded index — max 80 lines, pointers only
 - Tier 2 files are max 60 lines each, one topic per file
 - The `rules/distill.md` always-on section is capped at 15 lines of preferences

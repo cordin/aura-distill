@@ -195,9 +195,12 @@ install_codex() {
         sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-adapter.md"
     done_msg "distill-adapter.md ${DIM}(Codex overrides)${RESET}"
 
-    fetch_asset "codex/distill-monitor.md" |
-        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-monitor.md"
-    done_msg "distill-monitor.md ${DIM}(Codex session monitor)${RESET}"
+    fetch_asset "rules/distill.md" |
+        sed -e "s|{DISTILL_DIR}|$distill_dir|g" \
+            -e 's|active Claude config|active Codex home|g' \
+            -e 's|Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.|Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).|g' \
+            -e 's|/distill|$distill|g' > "$distill_dir/distill-monitor.md"
+    done_msg "distill-monitor.md ${DIM}(shared session rules)${RESET}"
 
     echo "$VERSION" > "$distill_dir/.version"
 

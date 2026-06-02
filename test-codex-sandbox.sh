@@ -67,7 +67,7 @@ install_codex
 assert_file "$TEST_SKILL" "native distill skill installed"
 assert_file "$TEST_CODEX_HOME/distill/distill-process.md" "shared process installed"
 assert_file "$TEST_CODEX_HOME/distill/distill-adapter.md" "Codex adapter installed"
-assert_file "$TEST_CODEX_HOME/distill/distill-monitor.md" "Codex monitor installed"
+assert_file "$TEST_CODEX_HOME/distill/distill-monitor.md" "shared session rules installed"
 assert_file "$TEST_CODEX_HOME/distill/SPINE.md" "SPINE created"
 assert_file "$TEST_CODEX_HOME/distill/.version" "version file created"
 
@@ -86,6 +86,18 @@ if cmp -s "$TEST_CODEX_HOME/distill/distill-process.md" \
   pass "Codex installs the shared process engine"
 else
   fail "Codex installs the shared process engine"
+fi
+
+sed -e "s|{DISTILL_DIR}|$TEST_CODEX_HOME/distill|g" \
+    -e 's|active Claude config|active Codex home|g' \
+    -e 's|Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.|Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).|g' \
+    -e 's|/distill|$distill|g' \
+  "$SCRIPT_DIR/rules/distill.md" > "$TEST_HOME/expected-shared-session.md"
+if cmp -s "$TEST_CODEX_HOME/distill/distill-monitor.md" \
+  "$TEST_HOME/expected-shared-session.md"; then
+  pass "Codex installs the shared session rules"
+else
+  fail "Codex installs the shared session rules"
 fi
 
 for dir in craft ops profile projects feedback archive; do

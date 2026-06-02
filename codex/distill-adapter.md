@@ -11,7 +11,7 @@ overrides wherever the shared process uses Claude Code terminology.
 | `/distill` | Invoke the native `$distill` skill |
 | Claude Code | Codex |
 | `~/.claude/CLAUDE.md` and project `CLAUDE.md` | `$CODEX_HOME/AGENTS.md` and active project `AGENTS.md` files |
-| `rules/distill.md` | `{DISTILL_DIR}/distill-monitor.md` |
+| `rules/distill.md` | Installed as `{DISTILL_DIR}/distill-monitor.md` with Codex substitutions |
 | Claude `memory/` files | Codex Memories under `$CODEX_HOME/memories/` |
 
 ## Knowledge Ownership
