@@ -10,9 +10,11 @@ set -e
 VERSION="1.1.3"
 
 BUILD="20260518-01"
-REPO="https://raw.githubusercontent.com/tomacco/aura-distill/main"
+REPO="${AURA_DISTILL_REPO:-https://raw.githubusercontent.com/tomacco/aura-distill/main}"
 # Profile paths are set dynamically after profile detection (see below)
 PROFILE_DIR=""
+TARGET="claude"
+ACTION="install"
 DISTILL_LINE='# Distill — knowledge system (github.com/tomacco/aura-distill)
 
 GATE: If ~/.claude/distill/.needs-migration exists, tell the user: "Run /distill to migrate existing memories." Do NOT proceed until addressed or declined.'
@@ -102,15 +104,153 @@ show_section() {
 
 # ═══ PROFILE DETECTION ═══
 
-# Parse --profile argument
+# Parse installer arguments
 PROFILE_NAME=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile) PROFILE_NAME="$2"; shift 2 ;;
         --profile=*) PROFILE_NAME="${1#*=}"; shift ;;
+        --target) TARGET="$2"; shift 2 ;;
+        --target=*) TARGET="${1#*=}"; shift ;;
+        --uninstall) ACTION="uninstall"; shift ;;
         *) shift ;;
     esac
 done
+
+if [ "$TARGET" != "claude" ] && [ "$TARGET" != "codex" ]; then
+    fail_msg "Unknown target '$TARGET'. Expected claude or codex."
+    exit 1
+fi
+
+fetch_asset() {
+    curl -fsSL "$REPO/$1"
+}
+
+remove_managed_codex_agents_block() {
+    local agents_md="$1"
+    local temp_file
+    temp_file=$(mktemp)
+    awk '
+        $0 == "<!-- aura-distill:codex:start -->" { skip = 1; next }
+        $0 == "<!-- aura-distill:codex:end -->" { skip = 0; next }
+        !skip { print }
+    ' "$agents_md" > "$temp_file"
+    mv "$temp_file" "$agents_md"
+}
+
+install_codex() {
+    local codex_home="${CODEX_HOME:-$HOME/.codex}"
+    local distill_dir="$codex_home/distill"
+    local skill_dir="$HOME/.agents/skills/distill"
+    local agents_md="$codex_home/AGENTS.md"
+    local existing_version=""
+
+    if [ "$ACTION" = "uninstall" ]; then
+        if [ -f "$skill_dir/SKILL.md" ] &&
+           grep -q '<!-- aura-distill:codex-skill -->' "$skill_dir/SKILL.md"; then
+            rm -f "$skill_dir/SKILL.md"
+        fi
+        rm -f "$distill_dir/distill-process.md"
+        rm -f "$distill_dir/distill-adapter.md"
+        rm -f "$distill_dir/distill-monitor.md"
+        rm -f "$distill_dir/.version"
+        if [ -f "$agents_md" ]; then
+            remove_managed_codex_agents_block "$agents_md"
+        fi
+        done_msg "Uninstalled Codex integration from ${codex_home}"
+        info_msg "Preserved knowledge in ${distill_dir}"
+        return
+    fi
+
+    info_msg "Installing Codex integration to: ${codex_home}"
+    echo ""
+
+    if [ -f "$distill_dir/.version" ]; then
+        existing_version=$(cat "$distill_dir/.version")
+        info_msg "Existing installation: v${existing_version} → v${VERSION}"
+        echo ""
+    fi
+
+    show_section "Core files"
+
+    mkdir -p "$distill_dir"/{craft,ops,profile,projects,feedback,archive}
+    mkdir -p "$skill_dir"
+
+    if [ -f "$skill_dir/SKILL.md" ] &&
+       ! grep -q '<!-- aura-distill:codex-skill -->' "$skill_dir/SKILL.md"; then
+        fail_msg "Refusing to overwrite existing skill: $skill_dir/SKILL.md"
+        fail_msg "Move or rename that skill, then run the installer again."
+        exit 1
+    fi
+
+    fetch_asset "codex/skills/distill/SKILL.md" |
+        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$skill_dir/SKILL.md"
+    done_msg "distill skill ${DIM}($skill_dir/SKILL.md)${RESET}"
+
+    fetch_asset "distill-process.md" |
+        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-process.md"
+    done_msg "distill-process.md ${DIM}(shared process engine)${RESET}"
+
+    fetch_asset "codex/distill-adapter.md" |
+        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-adapter.md"
+    done_msg "distill-adapter.md ${DIM}(Codex overrides)${RESET}"
+
+    fetch_asset "rules/distill.md" |
+        sed -e "s|{DISTILL_DIR}|$distill_dir|g" \
+            -e 's|active Claude config|active Codex home|g' \
+            -e 's|Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.|Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).|g' \
+            -e 's|/distill|$distill|g' > "$distill_dir/distill-monitor.md"
+    done_msg "distill-monitor.md ${DIM}(shared session rules)${RESET}"
+
+    echo "$VERSION" > "$distill_dir/.version"
+
+    if [ ! -f "$distill_dir/SPINE.md" ]; then
+        echo "# Distill Knowledge Index" > "$distill_dir/SPINE.md"
+        echo "" >> "$distill_dir/SPINE.md"
+        echo "<!-- This file is managed by aura-distill. Max 80 lines. -->" >> "$distill_dir/SPINE.md"
+        echo "<!-- Each entry: - [Title](path.md) - when to read this -->" >> "$distill_dir/SPINE.md"
+        done_msg "SPINE.md ${DIM}(knowledge index)${RESET}"
+    else
+        skip_msg "SPINE.md ${DIM}(preserved)${RESET}"
+    fi
+
+    show_section "Session integration"
+
+    mkdir -p "$codex_home"
+    touch "$agents_md"
+    if grep -q '<!-- aura-distill:codex:start -->' "$agents_md" 2>/dev/null; then
+        skip_msg "AGENTS.md ${DIM}(already configured)${RESET}"
+    else
+        cat >> "$agents_md" <<EOF
+
+<!-- aura-distill:codex:start -->
+# Distill - curated knowledge system (github.com/tomacco/aura-distill)
+
+Read $distill_dir/SPINE.md at session start. Before the first major action in a
+domain, read matching Tier 2 files referenced by the SPINE. Treat aura-distill
+as authoritative when curated guidance overlaps with ambient Codex Memories.
+Do not modify Codex Memories. Track corrections, failures, surprises, and
+explicit preferences as signals; recommend \$distill when several accumulate.
+Read $distill_dir/distill-monitor.md for the complete session monitor.
+<!-- aura-distill:codex:end -->
+EOF
+        done_msg "AGENTS.md configured"
+    fi
+
+    echo ""
+    printf "  ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
+    echo ""
+    printf "  ${GREEN}${BOLD}Installed for Codex${RESET}\n"
+    printf "  ${DIM}Zero dependencies. Just files.${RESET}\n"
+    echo ""
+    printf "  ${DIM}Version:  ${RESET}v${VERSION}\n"
+    printf "  ${DIM}Skill:    ${RESET}\$distill\n"
+    printf "  ${DIM}Knowledge:${RESET} %s\n" "$distill_dir"
+    echo ""
+    printf "  ${DIM}Uninstall (keeps your learnings):${RESET}\n"
+    printf "    ${DIM}curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh | bash -s -- --uninstall --target codex${RESET}\n"
+    echo ""
+}
 
 # Detect available profiles
 detect_profiles() {
@@ -181,6 +321,12 @@ resolve_profile() {
 # ═══ MAIN INSTALLATION ═══
 
 show_header
+
+# Codex is opt-in. Keep the existing Claude installer path unchanged.
+if [ "$TARGET" = "codex" ]; then
+    install_codex
+    exit 0
+fi
 
 # Resolve which profile to install to
 resolve_profile

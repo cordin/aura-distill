@@ -2,16 +2,20 @@
 
 ## What this is
 
-A first-principles memory system for Claude Code. Users install it via `install.sh`, which places files into `~/.claude/distill/`. The `/distill` slash command triggers retrospective distillation of conversation signals into tiered knowledge files.
+A first-principles memory system for Claude Code and Codex. Users install it via
+`install.sh`. Claude Code uses `~/.claude/distill/` and `/distill`; the opt-in
+Codex target uses `$CODEX_HOME/distill/` and `$distill`.
 
 ## Architecture
 
 - `distill.md` — Dispatcher (runs in main context, harvests signals, spawns sub-agent)
-- `distill-process.md` — Sub-agent instructions (the full distillation pipeline)
+- `distill-process.md` — Shared sub-agent instructions (the full distillation pipeline)
 - `distill-monitor.md` — Session-start monitor (minimal, loaded via `rules/distill.md`)
 - `knowledge-architecture.md` — Tier system design doc
 - `install.sh` / `install.ps1` — User-facing installers
+- `codex/` — Thin Codex-specific skill and adapter templates
 - `tests/` — A/B test scenarios, cognitive bias tests, persona-based methodology tests
+- `test-codex-sandbox.sh` — Disposable Codex installer tests
 - `docs/` — GitHub Pages site (landing, research)
 - `dashboard/` — Analytics dashboard
 
@@ -36,6 +40,8 @@ When developing or testing:
 ## Key conventions
 
 - All distill files use `{DISTILL_DIR}` as a placeholder — `install.sh` resolves it to the actual path via `sed`
+- Claude Code and Codex install the same root `distill-process.md`; keep platform-specific behavior in thin adapter files
+- Claude Code and Codex reuse `rules/distill.md`; the Codex installer renders it with native invocation and path substitutions
 - The SPINE (Tier 1) is the auto-loaded index — max 80 lines, pointers only
 - Tier 2 files are max 60 lines each, one topic per file
 - The `rules/distill.md` always-on section is capped at 15 lines of preferences
@@ -49,6 +55,7 @@ When developing or testing:
 - Test personas: Sofia (senior backend engineer) and Marcus (product manager)
 - Run persona tests: `./tests/scenarios/methodology/run-persona-test.sh`
 - Run integration tests: `./test-sandbox.sh`
+- Run Codex installer tests: `./test-codex-sandbox.sh`
 
 ## PR reviews
 
