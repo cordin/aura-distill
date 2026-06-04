@@ -27,6 +27,12 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
   bash -s -- --target codex
 ```
 
+**Codex** (PowerShell):
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1))) -Target codex
+```
+
 With Homebrew:
 
 ```bash
@@ -200,7 +206,13 @@ If installed through Homebrew:
 aura-distill uninstall --target codex
 ```
 
-Codex hooks, PowerShell support, and plugin packaging are deferred follow-ups.
+With PowerShell:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1))) -Uninstall -Target codex
+```
+
+Codex hooks and plugin packaging are deferred follow-ups.
 
 ---
 

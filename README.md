@@ -64,6 +64,8 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
 **Windows** (PowerShell):
 ```powershell
 irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex
+# Codex:
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1))) -Target codex
 ```
 
 <sub>No sudo. Claude Code installation writes to `~/.claude/`; Codex installation writes to `$CODEX_HOME` (default `~/.codex/`) and `~/.agents/skills/`. [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
@@ -93,8 +95,8 @@ Codex built-in Memories are left unchanged. They provide ambient background
 recall; aura-distill provides deliberate, inspectable principle curation. When
 the two overlap, curated aura-distill guidance wins.
 
-The initial Codex integration targets Bash on macOS, Linux, and WSL. Codex
-hooks, PowerShell support, and plugin packaging are deferred follow-ups.
+The Codex integration supports Bash on macOS, Linux, and WSL, plus PowerShell
+with `-Target codex`. Codex hooks and plugin packaging are deferred follow-ups.
 
 ---
 
@@ -192,8 +194,9 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
 
 **Windows** (PowerShell):
 ```powershell
-Remove-Item -Force $HOME\.claude\commands\distill.md, $HOME\.claude\rules\distill.md
-Remove-Item -Force $HOME\.claude\distill\distill-process.md, $HOME\.claude\distill\distill-monitor.md, $HOME\.claude\distill\.version
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1))) -Uninstall
+# Codex:
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1))) -Uninstall -Target codex
 ```
 
 Your knowledge files in `~/.claude/distill/` are preserved. They're yours.

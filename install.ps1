@@ -3,20 +3,37 @@
 #
 # Usage:
 #   irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | iex
+#   .\install.ps1 -Target codex
+#   .\install.ps1 -Uninstall -Target codex
+
+param(
+    [ValidateSet('claude', 'codex')]
+    [string]$Target = 'claude',
+
+    [switch]$Uninstall,
+
+    [string]$Repo = $(if ($env:AURA_DISTILL_REPO) { $env:AURA_DISTILL_REPO } else { 'https://raw.githubusercontent.com/tomacco/aura-distill/main' })
+)
 
 $ErrorActionPreference = 'Stop'
 
-$Version  = '0.7.2'
+$Version  = '1.1.3'
 $Build    = '20260515-01'
-$Repo     = 'https://raw.githubusercontent.com/tomacco/aura-distill/main'
 
 # Resolve home (works on PS 5.1 and PS 7+, Windows and cross-platform)
-$ClaudeHome  = if ($env:USERPROFILE) { Join-Path $env:USERPROFILE '.claude' } else { Join-Path $HOME '.claude' }
+$UserHome    = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
+$ClaudeHome  = Join-Path $UserHome '.claude'
 $CmdDir      = Join-Path $ClaudeHome 'commands'
 $DistillDir  = Join-Path $ClaudeHome 'distill'
 $RulesDir    = Join-Path $ClaudeHome 'rules'
 $ClaudeMd    = Join-Path $ClaudeHome 'CLAUDE.md'
 $SettingsJson = Join-Path $ClaudeHome 'settings.json'
+
+$CodexHome       = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $UserHome '.codex' }
+$CodexDistillDir = Join-Path $CodexHome 'distill'
+$CodexSkillDir   = Join-Path (Join-Path (Join-Path $UserHome '.agents') 'skills') 'distill'
+$CodexSkillFile  = Join-Path $CodexSkillDir 'SKILL.md'
+$CodexAgentsMd   = Join-Path $CodexHome 'AGENTS.md'
 
 $EmDash = [char]0x2014
 $DistillLine = @"
@@ -82,9 +99,222 @@ function Get-File {
     Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
 }
 
+function Get-AssetText {
+    param([Parameter(Mandatory=$true)][string]$Asset)
+    $response = Invoke-WebRequest -Uri "$Repo/$Asset" -UseBasicParsing
+    return [string]$response.Content
+}
+
+function Set-TextFile {
+    param(
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter(Mandatory=$true)][string]$Content,
+        [switch]$NoNewline
+    )
+    $parent = Split-Path -Parent $Path
+    if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
+    if ($NoNewline) {
+        [System.IO.File]::WriteAllText($Path, $Content, (New-Object System.Text.UTF8Encoding $false))
+    } else {
+        [System.IO.File]::WriteAllText($Path, ($Content + "`n"), (New-Object System.Text.UTF8Encoding $false))
+    }
+}
+
+function Render-CodexAsset {
+    param(
+        [Parameter(Mandatory=$true)][string]$Asset,
+        [Parameter(Mandatory=$true)][string]$Destination
+    )
+    try {
+        $content = (Get-AssetText $Asset).Replace('{DISTILL_DIR}', $CodexDistillDir)
+        Set-TextFile -Path $Destination -Content $content
+    } catch {
+        Write-Fail "Failed to download $Asset from $Repo"
+        Write-Fail 'Set AURA_DISTILL_REPO to the matching repository branch and try again.'
+        throw
+    }
+}
+
+function Render-CodexMonitor {
+    param([Parameter(Mandatory=$true)][string]$Destination)
+    try {
+        $content = (Get-AssetText 'rules/distill.md').Replace('{DISTILL_DIR}', $CodexDistillDir)
+        $content = $content.Replace('active Claude config', 'active Codex home')
+        $content = $content.Replace('Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.', 'Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).')
+        $content = $content.Replace('want to /distill?', 'want to $distill?')
+        $content = $content.Replace('Strongly recommend /distill', 'Strongly recommend $distill')
+        $content = $content.Replace('for `/distill`', 'for `$distill`')
+        $content = $content.Replace('by /distill', 'by $distill')
+        $content = $content.Replace('first /distill run', 'first $distill run')
+        Set-TextFile -Path $Destination -Content $content
+    } catch {
+        Write-Fail "Failed to download rules/distill.md from $Repo"
+        Write-Fail 'Set AURA_DISTILL_REPO to the matching repository branch and try again.'
+        throw
+    }
+}
+
+function Remove-ManagedCodexAgentsBlock {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    if (-not (Test-Path $Path)) { return }
+
+    $lines = Get-Content $Path
+    $kept = New-Object System.Collections.Generic.List[string]
+    $skip = $false
+    foreach ($line in $lines) {
+        if ($line -eq '<!-- aura-distill:codex:start -->') {
+            $skip = $true
+            continue
+        }
+        if ($line -eq '<!-- aura-distill:codex:end -->') {
+            $skip = $false
+            continue
+        }
+        if (-not $skip) {
+            $kept.Add($line)
+        }
+    }
+    Set-Content -Path $Path -Value $kept -Encoding utf8
+}
+
+function Uninstall-Claude {
+    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $CmdDir 'distill.md')
+    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $RulesDir 'distill.md')
+    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $DistillDir 'distill-process.md')
+    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $DistillDir 'distill-monitor.md')
+    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $DistillDir '.version')
+    Write-Done "Uninstalled Claude Code integration from $ClaudeHome"
+    Write-Info "Preserved knowledge in $DistillDir"
+}
+
+function Install-Codex {
+    if ($Uninstall) {
+        if ((Test-Path $CodexSkillFile) -and ((Get-Content $CodexSkillFile -Raw) -match '<!-- aura-distill:codex-skill -->')) {
+            Remove-Item -Force $CodexSkillFile
+        }
+        Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $CodexDistillDir 'distill-process.md')
+        Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $CodexDistillDir 'distill-adapter.md')
+        Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $CodexDistillDir 'distill-monitor.md')
+        Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $CodexDistillDir '.version')
+        Remove-ManagedCodexAgentsBlock $CodexAgentsMd
+        Write-Done "Uninstalled Codex integration from $CodexHome"
+        Write-Info "Preserved knowledge in $CodexDistillDir"
+        return
+    }
+
+    Write-Info "Installing Codex integration to: $CodexHome"
+    Write-Host ''
+
+    $codexVersionFile = Join-Path $CodexDistillDir '.version'
+    if (Test-Path $codexVersionFile) {
+        $existingVersion = (Get-Content $codexVersionFile -Raw).Trim()
+        Write-Info "Existing installation: v$existingVersion -> v$Version"
+        Write-Host ''
+    }
+
+    Write-Section 'Core files'
+
+    foreach ($d in @($CodexDistillDir,
+                     (Join-Path $CodexDistillDir 'craft'),
+                     (Join-Path $CodexDistillDir 'ops'),
+                     (Join-Path $CodexDistillDir 'profile'),
+                     (Join-Path $CodexDistillDir 'projects'),
+                     (Join-Path $CodexDistillDir 'feedback'),
+                     (Join-Path $CodexDistillDir 'archive'),
+                     $CodexSkillDir)) {
+        if (-not (Test-Path $d)) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
+    }
+
+    if ((Test-Path $CodexSkillFile) -and ((Get-Item $CodexSkillFile).Length -gt 0) -and ((Get-Content $CodexSkillFile -Raw) -notmatch '<!-- aura-distill:codex-skill -->')) {
+        Write-Fail "Refusing to overwrite existing skill: $CodexSkillFile"
+        Write-Fail 'Move or rename that skill, then run the installer again.'
+        exit 1
+    }
+
+    Render-CodexAsset 'codex/skills/distill/SKILL.md' $CodexSkillFile
+    Write-Done "distill skill ${DIM}($CodexSkillFile)${RESET}"
+
+    Render-CodexAsset 'distill-process.md' (Join-Path $CodexDistillDir 'distill-process.md')
+    Write-Done "distill-process.md ${DIM}(shared process engine)${RESET}"
+
+    Render-CodexAsset 'codex/distill-adapter.md' (Join-Path $CodexDistillDir 'distill-adapter.md')
+    Write-Done "distill-adapter.md ${DIM}(Codex overrides)${RESET}"
+
+    Render-CodexMonitor (Join-Path $CodexDistillDir 'distill-monitor.md')
+    Write-Done "distill-monitor.md ${DIM}(shared session rules)${RESET}"
+
+    Set-TextFile -Path $codexVersionFile -Content $Version -NoNewline
+
+    $codexSpinePath = Join-Path $CodexDistillDir 'SPINE.md'
+    if (-not (Test-Path $codexSpinePath)) {
+        $spine = @(
+            '# Distill Knowledge Index',
+            '',
+            '<!-- This file is managed by aura-distill. Max 80 lines. -->',
+            '<!-- Each entry: - [Title](path.md) - when to read this -->'
+        ) -join "`n"
+        Set-TextFile -Path $codexSpinePath -Content $spine
+        Write-Done "SPINE.md ${DIM}(knowledge index)${RESET}"
+    } else {
+        Write-Skip "SPINE.md ${DIM}(preserved)${RESET}"
+    }
+
+    Write-Section 'Session integration'
+
+    if (-not (Test-Path $CodexHome)) { New-Item -ItemType Directory -Force -Path $CodexHome | Out-Null }
+    if (-not (Test-Path $CodexAgentsMd)) { New-Item -ItemType File -Force -Path $CodexAgentsMd | Out-Null }
+    $codexSpineForAgents = (Join-Path $CodexDistillDir 'SPINE.md')
+    $codexMonitorForAgents = (Join-Path $CodexDistillDir 'distill-monitor.md')
+
+    $agentsContent = Get-Content $CodexAgentsMd -Raw
+    if ($agentsContent -match '<!-- aura-distill:codex:start -->') {
+        Write-Skip "AGENTS.md ${DIM}(already configured)${RESET}"
+    } else {
+        $block = @"
+
+<!-- aura-distill:codex:start -->
+# Distill - curated knowledge system (github.com/tomacco/aura-distill)
+
+Read $codexSpineForAgents at session start. Before the first major action in a
+domain, read matching Tier 2 files referenced by the SPINE. Treat aura-distill
+as authoritative when curated guidance overlaps with ambient Codex Memories.
+Do not modify Codex Memories. Track corrections, failures, surprises, and
+explicit preferences as signals; recommend `$distill when several accumulate.
+Read $codexMonitorForAgents for the complete session monitor.
+<!-- aura-distill:codex:end -->
+"@
+        Add-Content -Path $CodexAgentsMd -Value $block -Encoding utf8
+        Write-Done 'AGENTS.md configured'
+    }
+
+    Write-Host ''
+    Write-Host "  ${GREEN}---------------------------------------${RESET}"
+    Write-Host ''
+    Write-Host "  ${GREEN}${BOLD}Installed for Codex${RESET}"
+    Write-Host "  ${DIM}Zero dependencies. Just files.${RESET}"
+    Write-Host ''
+    Write-Host "  ${DIM}Version:  ${RESET}v$Version"
+    Write-Host "  ${DIM}Skill:    ${RESET}`$distill"
+    Write-Host "  ${DIM}Knowledge:${RESET} $CodexDistillDir"
+    Write-Host ''
+    Write-Host "  ${DIM}Uninstall (keeps your learnings):${RESET}"
+    Write-Host "    ${DIM}.\install.ps1 -Uninstall -Target codex${RESET}"
+    Write-Host ''
+}
+
 # === MAIN ===
 
 Write-Header
+
+if ($Target -eq 'codex') {
+    Install-Codex
+    exit 0
+}
+
+if ($Uninstall) {
+    Uninstall-Claude
+    exit 0
+}
 
 # Detect existing installation
 $existingVersion = ''
