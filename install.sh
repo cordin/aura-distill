@@ -3,6 +3,7 @@
 # https://github.com/tomacco/aura-distill
 
 set -e
+set -o pipefail
 
 
 
@@ -126,6 +127,46 @@ fetch_asset() {
     curl -fsSL "$REPO/$1"
 }
 
+render_codex_asset() {
+    local asset="$1"
+    local destination="$2"
+    local temp_file
+
+    temp_file=$(mktemp)
+    if fetch_asset "$asset" |
+        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$temp_file"; then
+        mv "$temp_file" "$destination"
+    else
+        rm -f "$temp_file"
+        fail_msg "Failed to download $asset from $REPO"
+        fail_msg "Set AURA_DISTILL_REPO to the matching repository branch and try again."
+        exit 1
+    fi
+}
+
+render_codex_monitor() {
+    local destination="$1"
+    local temp_file
+
+    temp_file=$(mktemp)
+    if fetch_asset "rules/distill.md" |
+        sed -e "s|{DISTILL_DIR}|$distill_dir|g" \
+            -e 's|active Claude config|active Codex home|g' \
+            -e 's|Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.|Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).|g' \
+            -e 's|want to /distill?|want to $distill?|g' \
+            -e 's|Strongly recommend /distill|Strongly recommend $distill|g' \
+            -e 's|for `/distill`|for `$distill`|g' \
+            -e 's|by /distill|by $distill|g' \
+            -e 's|first /distill run|first $distill run|g' > "$temp_file"; then
+        mv "$temp_file" "$destination"
+    else
+        rm -f "$temp_file"
+        fail_msg "Failed to download rules/distill.md from $REPO"
+        fail_msg "Set AURA_DISTILL_REPO to the matching repository branch and try again."
+        exit 1
+    fi
+}
+
 remove_managed_codex_agents_block() {
     local agents_md="$1"
     local temp_file
@@ -176,34 +217,23 @@ install_codex() {
     mkdir -p "$distill_dir"/{craft,ops,profile,projects,feedback,archive}
     mkdir -p "$skill_dir"
 
-    if [ -f "$skill_dir/SKILL.md" ] &&
+    if [ -s "$skill_dir/SKILL.md" ] &&
        ! grep -q '<!-- aura-distill:codex-skill -->' "$skill_dir/SKILL.md"; then
         fail_msg "Refusing to overwrite existing skill: $skill_dir/SKILL.md"
         fail_msg "Move or rename that skill, then run the installer again."
         exit 1
     fi
 
-    fetch_asset "codex/skills/distill/SKILL.md" |
-        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$skill_dir/SKILL.md"
+    render_codex_asset "codex/skills/distill/SKILL.md" "$skill_dir/SKILL.md"
     done_msg "distill skill ${DIM}($skill_dir/SKILL.md)${RESET}"
 
-    fetch_asset "distill-process.md" |
-        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-process.md"
+    render_codex_asset "distill-process.md" "$distill_dir/distill-process.md"
     done_msg "distill-process.md ${DIM}(shared process engine)${RESET}"
 
-    fetch_asset "codex/distill-adapter.md" |
-        sed "s|{DISTILL_DIR}|$distill_dir|g" > "$distill_dir/distill-adapter.md"
+    render_codex_asset "codex/distill-adapter.md" "$distill_dir/distill-adapter.md"
     done_msg "distill-adapter.md ${DIM}(Codex overrides)${RESET}"
 
-    fetch_asset "rules/distill.md" |
-        sed -e "s|{DISTILL_DIR}|$distill_dir|g" \
-            -e 's|active Claude config|active Codex home|g' \
-            -e 's|Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.|Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).|g' \
-            -e 's|want to /distill?|want to $distill?|g' \
-            -e 's|Strongly recommend /distill|Strongly recommend $distill|g' \
-            -e 's|for `/distill`|for `$distill`|g' \
-            -e 's|by /distill|by $distill|g' \
-            -e 's|first /distill run|first $distill run|g' > "$distill_dir/distill-monitor.md"
+    render_codex_monitor "$distill_dir/distill-monitor.md"
     done_msg "distill-monitor.md ${DIM}(shared session rules)${RESET}"
 
     echo "$VERSION" > "$distill_dir/.version"
