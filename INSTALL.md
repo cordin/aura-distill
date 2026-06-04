@@ -40,6 +40,13 @@ brew install tomacco/aura-distill/aura-distill
 aura-distill install --target codex
 ```
 
+As a Codex plugin from a local checkout:
+
+```bash
+codex plugin marketplace add .
+codex plugin add aura-distill@aura-distill
+```
+
 Codex installation resolves `CODEX_HOME`, defaulting to `~/.codex`. It keeps a
 separate knowledge base and does not modify Codex built-in Memories.
 
@@ -212,7 +219,7 @@ With PowerShell:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1))) -Uninstall -Target codex
 ```
 
-Codex hooks and plugin packaging are deferred follow-ups.
+Codex hooks are deferred until Codex exposes native hook events.
 
 ---
 

@@ -1,0 +1,20 @@
+{
+  "name": "aura-distill",
+  "interface": {
+    "displayName": "aura-distill"
+  },
+  "plugins": [
+    {
+      "name": "aura-distill",
+      "source": {
+        "source": "local",
+        "path": "./plugins/aura-distill"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
