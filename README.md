@@ -46,6 +46,8 @@ We A/B tested the same prompts with and without distill knowledge. Same model, s
 ```bash
 brew install tomacco/aura-distill/aura-distill
 aura-distill install
+# Codex:
+aura-distill install --target codex
 ```
 
 **macOS / Linux / WSL** (bash):
@@ -92,8 +94,7 @@ recall; aura-distill provides deliberate, inspectable principle curation. When
 the two overlap, curated aura-distill guidance wins.
 
 The initial Codex integration targets Bash on macOS, Linux, and WSL. Codex
-hooks, PowerShell support, Homebrew wrapper support, and plugin packaging are
-deferred follow-ups.
+hooks, PowerShell support, and plugin packaging are deferred follow-ups.
 
 ---
 

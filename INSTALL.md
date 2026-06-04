@@ -27,6 +27,13 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
   bash -s -- --target codex
 ```
 
+With Homebrew:
+
+```bash
+brew install tomacco/aura-distill/aura-distill
+aura-distill install --target codex
+```
+
 Codex installation resolves `CODEX_HOME`, defaulting to `~/.codex`. It keeps a
 separate knowledge base and does not modify Codex built-in Memories.
 
@@ -187,8 +194,13 @@ curl -sL https://raw.githubusercontent.com/tomacco/aura-distill/main/install.sh 
   bash -s -- --uninstall --target codex
 ```
 
-Codex hooks, PowerShell support, Homebrew wrapper support, and plugin packaging
-are deferred follow-ups.
+If installed through Homebrew:
+
+```bash
+aura-distill uninstall --target codex
+```
+
+Codex hooks, PowerShell support, and plugin packaging are deferred follow-ups.
 
 ---
 
