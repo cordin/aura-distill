@@ -199,7 +199,11 @@ install_codex() {
         sed -e "s|{DISTILL_DIR}|$distill_dir|g" \
             -e 's|active Claude config|active Codex home|g' \
             -e 's|Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.|Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).|g' \
-            -e 's|/distill|$distill|g' > "$distill_dir/distill-monitor.md"
+            -e 's|want to /distill?|want to $distill?|g' \
+            -e 's|Strongly recommend /distill|Strongly recommend $distill|g' \
+            -e 's|for `/distill`|for `$distill`|g' \
+            -e 's|by /distill|by $distill|g' \
+            -e 's|first /distill run|first $distill run|g' > "$distill_dir/distill-monitor.md"
     done_msg "distill-monitor.md ${DIM}(shared session rules)${RESET}"
 
     echo "$VERSION" > "$distill_dir/.version"
