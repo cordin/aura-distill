@@ -1,6 +1,6 @@
 # homebrew-aura-distill
 
-Homebrew tap for [aura-distill](https://github.com/tomacco/aura-distill) — retrospective knowledge distillation for Claude Code.
+Homebrew tap for [aura-distill](https://github.com/tomacco/aura-distill) — retrospective knowledge distillation for Claude Code and Codex.
 
 ## Install
 
@@ -8,6 +8,12 @@ Homebrew tap for [aura-distill](https://github.com/tomacco/aura-distill) — ret
 brew tap tomacco/aura-distill
 brew install aura-distill
 aura-distill install
+```
+
+For Codex:
+
+```bash
+aura-distill install --target codex
 ```
 
 ## Upgrade
@@ -29,6 +35,9 @@ aura-distill install --profile work
 ```bash
 # Remove from Claude profile (keeps your knowledge)
 aura-distill uninstall
+
+# Remove from Codex (keeps your knowledge)
+aura-distill uninstall --target codex
 
 # Remove the formula
 brew uninstall aura-distill
