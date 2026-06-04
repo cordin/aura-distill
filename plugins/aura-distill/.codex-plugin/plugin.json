@@ -1,0 +1,31 @@
+{
+  "name": "aura-distill",
+  "version": "1.1.3",
+  "description": "First-principles memory and knowledge distillation for Codex.",
+  "author": {
+    "name": "tomacco"
+  },
+  "homepage": "https://github.com/tomacco/aura-distill",
+  "repository": "https://github.com/tomacco/aura-distill",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "knowledge",
+    "codex",
+    "distillation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "aura-distill",
+    "shortDescription": "Distill Codex sessions into durable principles.",
+    "longDescription": "aura-distill adds a native $distill skill for consolidating corrections, failures, preferences, surprises, and decision origins into durable first-principles knowledge.",
+    "developerName": "tomacco",
+    "category": "Productivity",
+    "capabilities": [
+      "Knowledge distillation",
+      "Session memory",
+      "Principle curation"
+    ],
+    "defaultPrompt": "Use $distill to consolidate this Codex session into durable first-principles knowledge."
+  }
+}

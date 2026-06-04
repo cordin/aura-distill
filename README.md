@@ -68,6 +68,12 @@ irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1 | ie
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/tomacco/aura-distill/main/install.ps1))) -Target codex
 ```
 
+**Codex plugin**:
+```bash
+codex plugin marketplace add .
+codex plugin add aura-distill@aura-distill
+```
+
 <sub>No sudo. Claude Code installation writes to `~/.claude/`; Codex installation writes to `$CODEX_HOME` (default `~/.codex/`) and `~/.agents/skills/`. [Read install.sh](install.sh) / [install.ps1](install.ps1) first if you're the responsible kind.</sub>
 
 This installs:
@@ -95,8 +101,10 @@ Codex built-in Memories are left unchanged. They provide ambient background
 recall; aura-distill provides deliberate, inspectable principle curation. When
 the two overlap, curated aura-distill guidance wins.
 
-The Codex integration supports Bash on macOS, Linux, and WSL, plus PowerShell
-with `-Target codex`. Codex hooks and plugin packaging are deferred follow-ups.
+The Codex integration supports Bash on macOS, Linux, and WSL, PowerShell with
+`-Target codex`, and a repo-contained Codex plugin package under
+`plugins/aura-distill`. Codex hooks are deferred until Codex exposes native
+hook events.
 
 ---
 
