@@ -91,7 +91,11 @@ fi
 sed -e "s|{DISTILL_DIR}|$TEST_CODEX_HOME/distill|g" \
     -e 's|active Claude config|active Codex home|g' \
     -e 's|Typically `~/.claude/distill/` for the default profile, or `~/.claude-<name>/distill/` for named profiles.|Installed under `$CODEX_HOME/distill/` (typically `~/.codex/distill/`).|g' \
-    -e 's|/distill|$distill|g' \
+    -e 's|want to /distill?|want to $distill?|g' \
+    -e 's|Strongly recommend /distill|Strongly recommend $distill|g' \
+    -e 's|for `/distill`|for `$distill`|g' \
+    -e 's|by /distill|by $distill|g' \
+    -e 's|first /distill run|first $distill run|g' \
   "$SCRIPT_DIR/rules/distill.md" > "$TEST_HOME/expected-shared-session.md"
 if cmp -s "$TEST_CODEX_HOME/distill/distill-monitor.md" \
   "$TEST_HOME/expected-shared-session.md"; then
