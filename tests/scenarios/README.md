@@ -41,6 +41,46 @@ scenarios/
 ./cognitive/anchoring-bias/run-anchoring-test.sh
 ```
 
+### Codex retrieval A/B tests
+
+The Codex runner uses disposable `HOME`, `CODEX_HOME`, and Git workspace
+directories. It does not read or write your normal Codex profile. Pass an API
+key only to the runner invocation:
+
+```bash
+# Run the six original retrieval scenarios, three paired repetitions each
+CODEX_API_KEY="..." CODEX_TEST_MODEL="..." \
+  ./methodology/run-codex-ab.sh
+
+# Run one scenario
+CODEX_API_KEY="..." CODEX_TEST_MODEL="..." \
+  ./methodology/run-codex-ab.sh 01-repeated-correction
+```
+
+For a local smoke test using an existing file-backed ChatGPT login, explicitly
+point the runner at the cache. It copies the file into disposable profiles and
+removes those copies afterward:
+
+```bash
+CODEX_AB_AUTH_FILE="$HOME/.codex/auth.json" CODEX_TEST_MODEL="..." \
+  CODEX_AB_REPEATS=1 ./methodology/run-codex-ab.sh 01-repeated-correction
+```
+
+The runner uses Codex's read-only child sandbox by default and fails closed if
+Tier 2 retrieval cannot run. In a controlled local environment where nested
+sandboxing is unavailable, you can explicitly bypass the child sandbox. The
+workspace and Codex profiles remain disposable, but the Codex process itself
+can access the host, so use only the repository's trusted fixtures:
+
+```bash
+CODEX_AB_AUTH_FILE="$HOME/.codex/auth.json" CODEX_TEST_MODEL="..." \
+  CODEX_AB_BYPASS_SANDBOX=1 ./methodology/run-codex-ab.sh
+```
+
+Each scenario alternates `WITHOUT, WITH`, then `WITH, WITHOUT`, then
+`WITHOUT, WITH`. Raw responses, stderr, run metadata, and the scenario rubric
+are saved under `methodology/results/codex/`.
+
 ## Rules
 
 1. **No real company names** in any test output. Use Helios Financial.
