@@ -40,9 +40,15 @@ assert_dir() {
 }
 
 install_codex() {
+  install_codex_from "$LOCAL_REPO"
+}
+
+install_codex_from() {
+  local repo="$1"
+
   HOME="$TEST_HOME" \
   CODEX_HOME="$TEST_CODEX_HOME" \
-  AURA_DISTILL_REPO="$LOCAL_REPO" \
+  AURA_DISTILL_REPO="$repo" \
     bash "$SCRIPT_DIR/install.sh" --target codex >/dev/null
 }
 
@@ -140,6 +146,25 @@ if grep -q 'craft/custom.md' "$TEST_CODEX_HOME/distill/SPINE.md"; then
   pass "reinstall preserves SPINE knowledge"
 else
   fail "reinstall preserves SPINE knowledge"
+fi
+
+cp "$TEST_SKILL" "$TEST_HOME/skill.before-failed-fetch"
+BAD_REPO="$TEST_HOME/missing-assets"
+mkdir -p "$BAD_REPO"
+if install_codex_from "file://$BAD_REPO" 2>/dev/null; then
+  fail "install fails when Codex assets cannot be fetched"
+elif cmp -s "$TEST_SKILL" "$TEST_HOME/skill.before-failed-fetch"; then
+  pass "failed Codex asset fetch preserves existing managed skill"
+else
+  fail "failed Codex asset fetch preserves existing managed skill"
+fi
+
+: > "$TEST_SKILL"
+install_codex
+if grep -q '<!-- aura-distill:codex-skill -->' "$TEST_SKILL"; then
+  pass "install repairs empty Codex skill file"
+else
+  fail "install repairs empty Codex skill file"
 fi
 
 printf '# Durable principle\n' > "$TEST_CODEX_HOME/distill/craft/custom.md"
